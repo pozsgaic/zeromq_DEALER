@@ -4,6 +4,8 @@ use std::f64;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use std::time::{Duration, Instant};
+use gethostname::gethostname;
+use std::os::unix::ffi::OsStrExt;
 
 const ZMQ_PREFIX: &str = "tcp://";
 
@@ -15,7 +17,7 @@ fn run(ctx: &mut zmq::Context, url: &str) -> Result<(), zmq::Error> {
     let mut msg = zmq::Message::new();
     let server_url = format!("{}{}", ZMQ_PREFIX, url);
     let socket = ctx.socket(zmq::DEALER).unwrap();
-    socket.set_identity(server_url.as_bytes())?;
+    socket.set_identity(gethostname().as_bytes())?;
     socket.connect(&server_url)?;
 
     println!("Connected to {}", &server_url);
