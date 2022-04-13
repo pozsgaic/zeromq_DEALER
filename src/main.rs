@@ -5,15 +5,15 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use std::time::{Duration, Instant};
 
-const ZMQ_PREFIX: &str = "tcp://127.0.0.1";
+const ZMQ_PREFIX: &str = "tcp://";
 
 fn seconds(d: &Duration) -> f64 {
     d.as_secs() as f64 + (f64::from(d.subsec_nanos()) / 1e9)
 }
 
-fn run(ctx: &mut zmq::Context, port: u16) -> Result<(), zmq::Error> {
+fn run(ctx: &mut zmq::Context, url: &str) -> Result<(), zmq::Error> {
     let mut msg = zmq::Message::new();
-    let server_url = format!("{}:{}", ZMQ_PREFIX, port);
+    let server_url = format!("{}{}", ZMQ_PREFIX, url);
     let socket = ctx.socket(zmq::DEALER).unwrap();
     socket.set_identity(server_url.as_bytes())?;
     socket.connect(&server_url)?;
@@ -36,15 +36,15 @@ fn run(ctx: &mut zmq::Context, port: u16) -> Result<(), zmq::Error> {
     }
 }
 
-//  The DEALER will connect with the ROUTERs at the specified ports
+//  The DEALER will connect with the ROUTERs at the specified endpoints
 fn main() {
     let args: Vec<String> = env::args().collect();
     assert_ne!(args.len(), 1);
 
     let mut ctx = zmq::Context::new();
     for i in 1..args.len() {
-        let server_port: u16 = args[i].parse().unwrap();
-        match run(&mut ctx, server_port) {
+        let server_url = &args[i];
+        match run(&mut ctx, &server_url) {
             Ok(_) => {
                 println!("OK - shutting down");
             }
